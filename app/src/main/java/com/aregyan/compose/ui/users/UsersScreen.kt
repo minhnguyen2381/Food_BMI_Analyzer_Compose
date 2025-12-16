@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -17,13 +18,26 @@ import com.aregyan.compose.domain.User
 import com.aregyan.compose.ui.components.NoNetwork
 
 @Composable
-fun UsersScreen(
+fun UsersScreenRoute(
     onUserClick: (String) -> Unit
 ) {
     val viewModel = hiltViewModel<UsersViewModel>()
     val uiState = viewModel.uiState
 
-    if (uiState.offline) {
+    UserScreen(
+        isOffline = uiState.offline,
+        items = uiState.list,
+        onUserClick = onUserClick
+    )
+}
+
+@Composable
+fun UserScreen(
+    isOffline: Boolean,
+    items: List<User>,
+    onUserClick: (String) -> Unit
+) {
+    if (isOffline) {
         NoNetwork()
     } else {
         LazyColumn(
@@ -31,7 +45,7 @@ fun UsersScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            items(uiState.list) { item ->
+            items(items) { item ->
                 UserItem(item = item, onUserClick = onUserClick)
             }
         }
@@ -59,4 +73,17 @@ fun UserItem(item: User, onUserClick: (String) -> Unit) {
             color = MaterialTheme.colorScheme.onBackground
         )
     }
+}
+
+@Preview
+@Composable
+fun UsersScreenRoutePreview() {
+    UserScreen(
+        isOffline = false,
+        items = listOf(
+            User(1, "https://avatars.githubusercontent.com/u/1?v=4", "mojombo"),
+            User(2, "https://avatars.githubusercontent.com/u/2?v=4", "defunkt")
+        ),
+        onUserClick = {}
+    )
 }
