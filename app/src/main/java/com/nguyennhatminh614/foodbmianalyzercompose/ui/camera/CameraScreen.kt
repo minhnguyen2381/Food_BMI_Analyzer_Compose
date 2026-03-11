@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,15 +25,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -41,7 +40,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
-import kotlinx.coroutines.launch
+import com.nguyennhatminh614.foodbmianalyzercompose.R
+import com.nguyennhatminh614.foodbmianalyzercompose.util.DevicePreview
 import timber.log.Timber
 import java.util.concurrent.Executors
 
@@ -49,12 +49,10 @@ import java.util.concurrent.Executors
 @Composable
 fun CameraScreenRoute() {
     val cameraPermissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
-    val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         if (!cameraPermissionState.status.isGranted) {
-            coroutineScope.launch {
-                cameraPermissionState.launchPermissionRequest()
-            }
+            cameraPermissionState.launchPermissionRequest()
         }
     }
 
@@ -63,9 +61,7 @@ fun CameraScreenRoute() {
     } else {
         CameraNoPermissionScreen(
             onRequestPermissionClick = {
-                coroutineScope.launch {
-                    cameraPermissionState.launchPermissionRequest()
-                }
+                cameraPermissionState.launchPermissionRequest()
             }
         )
     }
@@ -74,17 +70,21 @@ fun CameraScreenRoute() {
 @Composable
 fun CameraNoPermissionScreen(onRequestPermissionClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Cần cấp quyền Camera để nhận diện món ăn.\nVui lòng cấp quyền để tiếp tục.",
+            text = stringResource(R.string.camera_permission_required_desc),
             textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(16.dp)
         )
         Button(onClick = onRequestPermissionClick) {
-            Text("Cấp Quyền")
+            Text(stringResource(R.string.action_grant_permission))
         }
     }
 }
@@ -93,7 +93,11 @@ fun CameraNoPermissionScreen(onRequestPermissionClick: () -> Unit) {
 @Composable
 fun CameraScreen() {
     val lifecycleOwner = LocalLifecycleOwner.current
-    var detectedLabel by remember { mutableStateOf("Đang nhận diện...") }
+    val initialLabel = stringResource(R.string.camera_recognizing)
+    var detectedLabel by remember { mutableStateOf(initialLabel) }
+
+    val resultFormat = stringResource(R.string.camera_recognition_result)
+    val failedMessage = stringResource(R.string.camera_recognition_failed)
 
     // Executor for MLKit analysis to run in background thread
     val backgroundExecutor = remember { Executors.newSingleThreadExecutor() }
@@ -136,9 +140,9 @@ fun CameraScreen() {
                             labeler.process(image).addOnSuccessListener { labels ->
                                 val topLabel = labels.firstOrNull()
                                 detectedLabel = if (topLabel != null) {
-                                    "${topLabel.text}: ${(topLabel.confidence * 100).toInt()}%"
+                                    String.format(resultFormat, topLabel.text, (topLabel.confidence * 100).toInt())
                                 } else {
-                                    "Không nhận diện được đối tượng"
+                                    failedMessage
                                 }
                             }.addOnCompleteListener {
                                 imageProxy.close()
@@ -169,12 +173,35 @@ fun CameraScreen() {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 64.dp)
                 .fillMaxWidth(0.8f)
-                .background(Color.Black.copy(alpha = 0.5f), shape = MaterialTheme.shapes.medium)
+                .background(
+                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f),
+                    shape = MaterialTheme.shapes.medium
+                )
                 .padding(16.dp),
-            color = Color.White,
-            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@DevicePreview
+@Composable
+private fun CameraNoPermissionPreview() {
+    MaterialTheme {
+        Surface {
+            CameraNoPermissionScreen(onRequestPermissionClick = {})
+        }
+    }
+}
+
+@DevicePreview
+@Composable
+private fun CameraScreenPreview() {
+    MaterialTheme {
+        Surface {
+            CameraScreen()
+        }
     }
 }
 
