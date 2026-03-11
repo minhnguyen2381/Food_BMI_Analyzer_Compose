@@ -9,17 +9,22 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +41,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.Executors
 
@@ -43,18 +49,42 @@ import java.util.concurrent.Executors
 @Composable
 fun CameraScreenRoute() {
     val cameraPermissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
-
+    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         if (!cameraPermissionState.status.isGranted) {
-            cameraPermissionState.launchPermissionRequest()
+            coroutineScope.launch {
+                cameraPermissionState.launchPermissionRequest()
+            }
         }
     }
 
     if (cameraPermissionState.status.isGranted) {
         CameraScreen()
     } else {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "Cần cấp quyền Camera để sử dụng tính năng này.")
+        CameraNoPermissionScreen(
+            onRequestPermissionClick = {
+                coroutineScope.launch {
+                    cameraPermissionState.launchPermissionRequest()
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun CameraNoPermissionScreen(onRequestPermissionClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Cần cấp quyền Camera để nhận diện món ăn.\nVui lòng cấp quyền để tiếp tục.",
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(16.dp)
+        )
+        Button(onClick = onRequestPermissionClick) {
+            Text("Cấp Quyền")
         }
     }
 }
@@ -68,16 +98,23 @@ fun CameraScreen() {
     // Executor for MLKit analysis to run in background thread
     val backgroundExecutor = remember { Executors.newSingleThreadExecutor() }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            backgroundExecutor.shutdown()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { ctx ->
-                val previewView = PreviewView(ctx).apply {
+                PreviewView(ctx).apply {
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
                     )
                 }
-
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+            },
+            update = { previewView ->
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(previewView.context)
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
 
@@ -121,10 +158,9 @@ fun CameraScreen() {
                     } catch (e: Exception) {
                         Timber.tag("CameraScreen").e(e, "Use case binding failed")
                     }
-                }, ContextCompat.getMainExecutor(ctx))
-
-                previewView
-            }, modifier = Modifier.fillMaxSize()
+                }, ContextCompat.getMainExecutor(previewView.context))
+            },
+            modifier = Modifier.fillMaxSize()
         )
 
         Text(
