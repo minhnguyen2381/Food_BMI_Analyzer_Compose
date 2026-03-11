@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Jetpack Compose Boilerplate</string>
+    <string name="app_name">Food BMI Analyzer</string>
     <string name="please_check_network_connection">Please check your network connection</string>
     <string name="camera_permission_required_desc">Camera permission is required to recognize food.\nPlease grant the permission to continue.</string>
     <string name="action_grant_permission">Grant Permission</string>
