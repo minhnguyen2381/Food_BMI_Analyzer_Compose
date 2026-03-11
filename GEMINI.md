@@ -2,7 +2,8 @@
 
 ## Jetpack Compose Expert
 For all Jetpack Compose tasks, follow the workflow and checklists in
-`jetpack-compose-expert-skill/SKILL.md`.
+1. `jetpack-compose-expert-skill/SKILL.md`.
+2. `custom-compose-skill/custom-compose-skill.md`.
 
 Before answering any Compose question, consult the relevant reference:
 - State management -> `jetpack-compose-expert-skill/references/state-management.md`
