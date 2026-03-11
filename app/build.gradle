@@ -9,7 +9,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.aregyan.compose"
+        applicationId "com.nguyennhatminh614.foodbmianalyzercompose"
         minSdk 23
         targetSdk 34
         versionCode 1
@@ -46,7 +46,7 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-    namespace 'com.aregyan.compose'
+    namespace 'com.nguyennhatminh614.foodbmianalyzercompose'
 }
 
 dependencies {
