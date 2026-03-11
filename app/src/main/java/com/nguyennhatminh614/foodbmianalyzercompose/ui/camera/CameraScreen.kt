@@ -108,64 +108,77 @@ fun CameraScreen() {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                PreviewView(ctx).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            },
-            update = { previewView ->
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(previewView.context)
-                cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
+    CameraContentScreen(
+        detectedLabel = detectedLabel,
+        cameraView = {
+            AndroidView(
+                factory = { ctx ->
+                    PreviewView(ctx).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                        )
                     }
+                },
+                update = { previewView ->
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(previewView.context)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
 
-                    val imageAnalysis = ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
+                        val preview = Preview.Builder().build().also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
 
-                    val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
 
-                    imageAnalysis.setAnalyzer(backgroundExecutor) { imageProxy ->
-                        val mediaImage = imageProxy.image
-                        if (mediaImage != null) {
-                            val image = InputImage.fromMediaImage(
-                                mediaImage, imageProxy.imageInfo.rotationDegrees
-                            )
-                            labeler.process(image).addOnSuccessListener { labels ->
-                                val topLabel = labels.firstOrNull()
-                                detectedLabel = if (topLabel != null) {
-                                    String.format(resultFormat, topLabel.text, (topLabel.confidence * 100).toInt())
-                                } else {
-                                    failedMessage
+                        val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
+
+                        imageAnalysis.setAnalyzer(backgroundExecutor) { imageProxy ->
+                            val mediaImage = imageProxy.image
+                            if (mediaImage != null) {
+                                val image = InputImage.fromMediaImage(
+                                    mediaImage, imageProxy.imageInfo.rotationDegrees
+                                )
+                                labeler.process(image).addOnSuccessListener { labels ->
+                                    val topLabel = labels.firstOrNull()
+                                    detectedLabel = if (topLabel != null) {
+                                        String.format(resultFormat, topLabel.text, (topLabel.confidence * 100).toInt())
+                                    } else {
+                                        failedMessage
+                                    }
+                                }.addOnCompleteListener {
+                                    imageProxy.close()
                                 }
-                            }.addOnCompleteListener {
+                            } else {
                                 imageProxy.close()
                             }
-                        } else {
-                            imageProxy.close()
                         }
-                    }
 
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner, cameraSelector, preview, imageAnalysis
-                        )
-                    } catch (e: Exception) {
-                        Timber.tag("CameraScreen").e(e, "Use case binding failed")
-                    }
-                }, ContextCompat.getMainExecutor(previewView.context))
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner, cameraSelector, preview, imageAnalysis
+                            )
+                        } catch (e: Exception) {
+                            Timber.tag("CameraScreen").e(e, "Use case binding failed")
+                        }
+                    }, ContextCompat.getMainExecutor(previewView.context))
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    )
+}
+
+@Composable
+fun CameraContentScreen(
+    detectedLabel: String,
+    cameraView: @Composable () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        cameraView()
 
         Text(
             text = detectedLabel,
@@ -200,7 +213,12 @@ private fun CameraNoPermissionPreview() {
 private fun CameraScreenPreview() {
     MaterialTheme {
         Surface {
-            CameraScreen()
+            CameraContentScreen(
+                detectedLabel = "Food Name: 99%",
+                cameraView = {
+                    Box(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black))
+                }
+            )
         }
     }
 }
