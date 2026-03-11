@@ -68,9 +68,12 @@ fun CameraScreenRoute() {
 }
 
 @Composable
-fun CameraNoPermissionScreen(onRequestPermissionClick: () -> Unit) {
+fun CameraNoPermissionScreen(
+    onRequestPermissionClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
@@ -120,7 +123,8 @@ fun CameraScreen() {
                     }
                 },
                 update = { previewView ->
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(previewView.context)
+                    val cameraProviderFuture =
+                        ProcessCameraProvider.getInstance(previewView.context)
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
 
@@ -129,7 +133,8 @@ fun CameraScreen() {
                         }
 
                         val imageAnalysis = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .build()
 
                         val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
 
@@ -142,7 +147,11 @@ fun CameraScreen() {
                                 labeler.process(image).addOnSuccessListener { labels ->
                                     val topLabel = labels.firstOrNull()
                                     detectedLabel = if (topLabel != null) {
-                                        String.format(resultFormat, topLabel.text, (topLabel.confidence * 100).toInt())
+                                        String.format(
+                                            resultFormat,
+                                            topLabel.text,
+                                            (topLabel.confidence * 100).toInt()
+                                        )
                                     } else {
                                         failedMessage
                                     }
@@ -174,10 +183,11 @@ fun CameraScreen() {
 
 @Composable
 fun CameraContentScreen(
+    modifier: Modifier = Modifier,
     detectedLabel: String,
     cameraView: @Composable () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         cameraView()
 
         Text(
@@ -216,7 +226,11 @@ private fun CameraScreenPreview() {
             CameraContentScreen(
                 detectedLabel = "Food Name: 99%",
                 cameraView = {
-                    Box(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(androidx.compose.ui.graphics.Color.Black)
+                    )
                 }
             )
         }
