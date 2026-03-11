@@ -1,15 +1,18 @@
 package com.nguyennhatminh614.foodbmianalyzercompose.ui.users
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nguyennhatminh614.foodbmianalyzercompose.repository.UsersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -17,23 +20,31 @@ class UsersViewModel @Inject constructor(
     private val usersRepository: UsersRepository
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(UsersUiState())
-        private set
+    private val isOfflineState = MutableStateFlow(false)
+
+    val uiState: StateFlow<UsersUiState> = combine(
+        usersRepository.users,
+        isOfflineState
+    ) { list, offlineError ->
+        val offline = list.isNullOrEmpty() && offlineError
+        UsersUiState(
+            list = list ?: emptyList(),
+            offline = offline
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = UsersUiState()
+    )
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            usersRepository.refreshUsers()
-            usersRepository.users.collect { list ->
-                withContext(Dispatchers.Main) {
-                    uiState = if (list.isNullOrEmpty()) {
-                        uiState.copy(offline = true)
-                    } else {
-                        uiState.copy(
-                            list = list,
-                            offline = false
-                        )
-                    }
-                }
+            try {
+                isOfflineState.update { false }
+                usersRepository.refreshUsers()
+            } catch (e: Exception) {
+                Timber.w(e)
+                isOfflineState.update { true }
             }
         }
     }

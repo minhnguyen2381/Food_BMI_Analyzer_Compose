@@ -1,17 +1,21 @@
 package com.nguyennhatminh614.foodbmianalyzercompose.ui.details
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nguyennhatminh614.foodbmianalyzercompose.domain.Details
 import com.nguyennhatminh614.foodbmianalyzercompose.repository.DetailsRepository
 import com.nguyennhatminh614.foodbmianalyzercompose.ui.Argument
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,24 +25,32 @@ class DetailsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val username: String? = savedStateHandle[Argument.USERNAME]
-    var uiState by mutableStateOf(DetailsUiState())
-        private set
+    private val isOfflineState = MutableStateFlow(false)
+
+    val uiState: StateFlow<DetailsUiState> = combine(
+        detailsRepository.getUserDetails(username ?: ""),
+        isOfflineState
+    ) { detail, offlineError ->
+        val offline = detail == null && offlineError
+        DetailsUiState(
+            detail = detail ?: Details(),
+            offline = offline
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DetailsUiState()
+    )
 
     init {
         username?.let {
             viewModelScope.launch(Dispatchers.IO) {
-                detailsRepository.refreshDetails(it)
-                detailsRepository.getUserDetails(it).collect { detail ->
-                    withContext(Dispatchers.Main) {
-                        uiState = if (detail == null) {
-                            uiState.copy(offline = true)
-                        } else {
-                            uiState.copy(
-                                detail = detail,
-                                offline = false
-                            )
-                        }
-                    }
+                try {
+                    isOfflineState.update { false }
+                    detailsRepository.refreshDetails(it)
+                } catch (e: Exception) {
+                    Timber.w(e)
+                    isOfflineState.update { true }
                 }
             }
         }

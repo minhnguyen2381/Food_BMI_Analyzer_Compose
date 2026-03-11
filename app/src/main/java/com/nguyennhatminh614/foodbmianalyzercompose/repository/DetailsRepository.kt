@@ -19,12 +19,8 @@ class DetailsRepository @Inject constructor(
         appDatabase.usersDao.getDetails(user).map { it?.asDomainModel() }
 
     suspend fun refreshDetails(user: String) {
-        try {
-            val userDetails = detailsApi.getDetails(user)
-            appDatabase.usersDao.insertDetails(userDetails.asDatabaseModel())
-        } catch (e: Exception) {
-            Timber.w(e)
-        }
+        val userDetails = detailsApi.getDetails(user)
+        appDatabase.usersDao.insertDetails(userDetails.asDatabaseModel())
     }
 
 }

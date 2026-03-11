@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -12,15 +14,25 @@ import coil.compose.AsyncImage
 import com.nguyennhatminh614.foodbmianalyzercompose.ui.components.NoNetwork
 
 @Composable
-fun DetailsScreen() {
+fun DetailsScreenRoute() {
     val viewModel = hiltViewModel<DetailsViewModel>()
-    val uiState = viewModel.uiState
+    val uiState by viewModel.uiState.collectAsState()
 
+    DetailsScreen(
+        uiState = uiState
+    )
+}
+
+@Composable
+fun DetailsScreen(
+    modifier: Modifier = Modifier,
+    uiState: DetailsUiState
+) {
     if (uiState.offline) {
-        NoNetwork()
+        NoNetwork(modifier = modifier)
     } else {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp)

@@ -7,7 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.nguyennhatminh614.foodbmianalyzercompose.ui.details.DetailsScreen
+import com.nguyennhatminh614.foodbmianalyzercompose.ui.details.DetailsScreenRoute
 import com.nguyennhatminh614.foodbmianalyzercompose.ui.users.UsersScreenRoute
 
 @Composable
@@ -35,7 +35,7 @@ fun ComposeApp() {
                 }
             ),
         ) {
-            DetailsScreen()
+            DetailsScreenRoute()
         }
     }
 }

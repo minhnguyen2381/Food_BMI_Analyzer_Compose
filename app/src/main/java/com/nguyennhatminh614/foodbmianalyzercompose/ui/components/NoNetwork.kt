@@ -14,9 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.nguyennhatminh614.foodbmianalyzercompose.R
 
 @Composable
-fun NoNetwork() {
+fun NoNetwork(
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 32.dp),

@@ -19,11 +19,7 @@ class UsersRepository @Inject constructor(
         appDatabase.usersDao.getUsers().map { it?.asDomainModel() }
 
     suspend fun refreshUsers() {
-        try {
-            val users = usersApi.getUsers()
-            appDatabase.usersDao.insertUsers(users.asDatabaseModel())
-        } catch (e: Exception) {
-            Timber.w(e)
-        }
+        val users = usersApi.getUsers()
+        appDatabase.usersDao.insertUsers(users.asDatabaseModel())
     }
 }

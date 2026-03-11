@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,7 +24,7 @@ fun UsersScreenRoute(
     onUserClick: (String) -> Unit
 ) {
     val viewModel = hiltViewModel<UsersViewModel>()
-    val uiState = viewModel.uiState
+    val uiState by viewModel.uiState.collectAsState()
 
     UserScreen(
         isOffline = uiState.offline,
@@ -33,19 +35,23 @@ fun UsersScreenRoute(
 
 @Composable
 fun UserScreen(
+    modifier: Modifier = Modifier,
     isOffline: Boolean,
     items: List<User>,
     onUserClick: (String) -> Unit
 ) {
     if (isOffline) {
-        NoNetwork()
+        NoNetwork(modifier = modifier)
     } else {
         LazyColumn(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            items(items) { item ->
+            items(
+                items = items,
+                key = { it.id }
+            ) { item ->
                 UserItem(item = item, onUserClick = onUserClick)
             }
         }
@@ -53,9 +59,13 @@ fun UserScreen(
 }
 
 @Composable
-fun UserItem(item: User, onUserClick: (String) -> Unit) {
+fun UserItem(
+    modifier: Modifier = Modifier,
+    item: User, 
+    onUserClick: (String) -> Unit
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onUserClick(item.username) }
             .padding(16.dp),
