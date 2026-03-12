@@ -1,6 +1,5 @@
-package com.nguyennhatminh614.foodbmianalyzercompose.ui.camera
+package com.nguyennhatminh614.foodbmianalyzercompose.ui.camera.components
 
-import android.Manifest
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -9,19 +8,15 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,9 +29,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
@@ -44,57 +36,6 @@ import com.nguyennhatminh614.foodbmianalyzercompose.R
 import com.nguyennhatminh614.foodbmianalyzercompose.util.DevicePreview
 import timber.log.Timber
 import java.util.concurrent.Executors
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun CameraScreenRoute() {
-    val cameraPermissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
-
-    LaunchedEffect(Unit) {
-        if (!cameraPermissionState.status.isGranted) {
-            cameraPermissionState.launchPermissionRequest()
-        }
-    }
-
-    when {
-        !cameraPermissionState.status.isGranted -> {
-            CameraNoPermissionScreen(
-                onRequestPermissionClick = {
-                    cameraPermissionState.launchPermissionRequest()
-                }
-            )
-        }
-
-        else -> {
-            CameraScreen()
-        }
-    }
-}
-
-@Composable
-fun CameraNoPermissionScreen(
-    onRequestPermissionClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.camera_permission_required_desc),
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(16.dp)
-        )
-        Button(onClick = onRequestPermissionClick) {
-            Text(stringResource(R.string.action_grant_permission))
-        }
-    }
-}
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
@@ -217,16 +158,6 @@ fun CameraContentScreen(
 
 @DevicePreview
 @Composable
-private fun CameraNoPermissionPreview() {
-    MaterialTheme {
-        Surface {
-            CameraNoPermissionScreen(onRequestPermissionClick = {})
-        }
-    }
-}
-
-@DevicePreview
-@Composable
 private fun CameraScreenPreview() {
     MaterialTheme {
         Surface {
@@ -243,4 +174,3 @@ private fun CameraScreenPreview() {
         }
     }
 }
-
