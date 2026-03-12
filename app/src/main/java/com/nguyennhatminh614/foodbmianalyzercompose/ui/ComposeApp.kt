@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.nguyennhatminh614.foodbmianalyzercompose.ui.camera.CameraScreenRoute
 import com.nguyennhatminh614.foodbmianalyzercompose.ui.details.DetailsScreenRoute
 import com.nguyennhatminh614.foodbmianalyzercompose.ui.users.UsersScreenRoute
 
@@ -15,8 +16,11 @@ fun ComposeApp() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = Route.USER
+        startDestination = Route.CAMERA
     ) {
+        composable(Route.CAMERA) {
+            CameraScreenRoute()
+        }
         composable(Route.USER) { backStackEntry ->
             UsersScreenRoute(
                 onUserClick = { username ->
@@ -41,6 +45,7 @@ fun ComposeApp() {
 }
 
 object Route {
+    const val CAMERA = "camera"
     const val USER = "user"
     const val DETAIL = "detail"
 }
