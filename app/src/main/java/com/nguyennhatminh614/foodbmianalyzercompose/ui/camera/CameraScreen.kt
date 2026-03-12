@@ -56,14 +56,18 @@ fun CameraScreenRoute() {
         }
     }
 
-    if (cameraPermissionState.status.isGranted) {
-        CameraScreen()
-    } else {
-        CameraNoPermissionScreen(
-            onRequestPermissionClick = {
-                cameraPermissionState.launchPermissionRequest()
-            }
-        )
+    when {
+        !cameraPermissionState.status.isGranted -> {
+            CameraNoPermissionScreen(
+                onRequestPermissionClick = {
+                    cameraPermissionState.launchPermissionRequest()
+                }
+            )
+        }
+
+        else -> {
+            CameraScreen()
+        }
     }
 }
 
@@ -94,7 +98,9 @@ fun CameraNoPermissionScreen(
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
-fun CameraScreen() {
+fun CameraScreen(
+    modifier: Modifier = Modifier,
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val initialLabel = stringResource(R.string.camera_recognizing)
     var detectedLabel by remember { mutableStateOf(initialLabel) }
@@ -112,6 +118,7 @@ fun CameraScreen() {
     }
 
     CameraContentScreen(
+        modifier = modifier,
         detectedLabel = detectedLabel,
         cameraView = {
             AndroidView(
